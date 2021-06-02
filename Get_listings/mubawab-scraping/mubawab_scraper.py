@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC 
 from selenium.common.exceptions import TimeoutException, NoSuchElementException, ElementClickInterceptedException
 import numpy as np
+import pandas as pd
 
 def on_listings_page(browser):
     '''
@@ -16,7 +17,7 @@ def on_listings_page(browser):
     except NoSuchElementException:
         return False
 
-def get_listing(browser,n=0):
+def get_listing(browser,ard,qrt,n=0):
     '''
     This function gets the info of the n'th listing on the listings page and goes back to that page
     '''
@@ -42,11 +43,11 @@ def get_listing(browser,n=0):
         other_tags = [tag.text for tag in tags]
     except:
         other_tags = np.nan
-    ls = [loca,title,price,other_tags]
+    ls = [ard,qrt,loca,title,price,other_tags]
     browser.back()
     return ls
 
-def get_listings_pages(browser, n_pages = None):
+def get_listings_pages(browser, ard,qrt, n_pages = None):
     '''
     This functions runs through all the pages of listings and returns an array with the listings informations
     '''
@@ -62,7 +63,7 @@ def get_listings_pages(browser, n_pages = None):
             while not last_page:
                 n_listings = len(browser.find_elements_by_xpath("//li[@class='listingBox w100']"))
                 for n in range(n_listings):
-                    ls = get_listing(browser,n)
+                    ls = get_listing(browser,n,ard,qrt)
                     listings_info.append(ls)
                 #go to next page if not on last page
                 try:
@@ -80,7 +81,7 @@ def get_listings_pages(browser, n_pages = None):
                 for i in range(n_pages):
                     n_listings = len(browser.find_elements_by_xpath("//li[@class='listingBox w100']"))
                     for n in range(n_listings):
-                        ls = get_listing(browser,n)
+                        ls = get_listing(browser,n,ard,qrt)
                         listings_info.append(ls)
                     try:
                         pages = browser.find_elements_by_xpath('/html/body/section/div[2]/div[3]/div[1]/a')
@@ -95,6 +96,7 @@ all_data = []
 #adding the incognito argument to webdriver
 option = webdriver.ChromeOptions()
 option.add_argument(" — incognito")
+option.headless = True
 
 #create a new instance of Chrome
 driver_path = '/Library/Application Support/Google/chromedriver'
@@ -133,7 +135,7 @@ except TimeoutException:
     print("Timed out waiting for page to load")
     browser.quit()
 
-url_ard = browser.current_url()    
+url_ard = browser.current_url
 n_arrondissements = len(browser.find_elements_by_xpath('/html/body/section/div[2]/div[1]/div[2]/ul/li'))
 for n in range(2):
     arrondissements = browser.find_elements_by_xpath('/html/body/section/div[2]/div[1]/div[2]/ul/li')
@@ -141,18 +143,19 @@ for n in range(2):
     qrt_text = np.nan
     arrondissements[n].click() #add arrondissement selector
     try :
-        all_data.append([ard_text,qrt_text]+get_listings_pages(browser))
+        all_data.append(get_listings_pages(browser, ard= ard_text, art= qrt_text))
         browser.get(url_ard)
     except:
-        url_qrt = browser.current_url()
+        url_qrt = browser.current_url
         n_quartiers = len(browser.find_elements_by_xpath('/html/body/section/div[2]/div[1]/div[2]/ul/li'))
         for nq in range(2):
             quartiers = browser.find_elements_by_xpath('/html/body/section/div[2]/div[1]/div[2]/ul/li')
             qrt_text = quartiers[nq].text
             quartiers[nq].click()
-            all_data.append([ard_text,qrt_text]+get_listings_pages(browser,n_pages = 1))
+            all_data.append(get_listings_pages(browser,ard = ard_text, qrt= qrt_text,n_pages = 1))
             browser.get(url_qrt)
         browser.get(url_ard)
 
-
+df = pd.DataFrame(all_data)
+melted = pd.melt(df,ignore_index=True,col_level=0)
     
