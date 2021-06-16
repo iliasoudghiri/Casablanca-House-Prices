@@ -8,7 +8,6 @@ Created on Wed Jun  9 13:33:12 2021
 import pandas as pd 
 import numpy as np
 
-
 df = pd.read_csv('mubawab_listings.csv',dtype = object )
 
 #clean type column to keep only the first word
@@ -35,6 +34,7 @@ for i in range(len(df)):
         if "m²" in tags[t]:
             df.loc[i,'Area'] = tags[t]
             to_pop.append(t)
+
         if "Pièces" in tags[t] or "Pièce" in tags[t]:
             df.loc[i,'Rooms'] = tags[t]
             to_pop.append(t)
@@ -42,6 +42,7 @@ for i in range(len(df)):
             df.loc[i,'Bedrooms'] = tags[t]
             to_pop.append(t)
         if "Salles de bains" in tags[t] or "Salle de bain" in tags[t]:
+
             df.loc[i,'Bathrooms'] = tags[t]
             to_pop.append(t)
         if "étage" in tags[t]:
@@ -80,6 +81,7 @@ for idx in missing_type:
 #Drop listings with missing type for which title didn't contain type either
 df = df.dropna(subset = ['Type']).reset_index(drop = True)
 
+
 #Check and drop duplicates
 df.duplicated(subset = ['Type', 'Area', 'Price', 'Localisation']).sum()
 df = df.drop_duplicates(subset = ['Type', 'Area', 'Price', 'Localisation']).reset_index(drop= True)
@@ -95,6 +97,7 @@ df = df.drop(['Title'],axis=1)
 
 #Add Price_m2 column
 df['Price_m2'] = df['Price']/df['Area']
+
 
 #Save df to csv file for further analysis and preprocessing
 df.to_csv('mubawab_listings_clean.csv',index=False)
