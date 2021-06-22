@@ -98,6 +98,10 @@ df = df.drop(['Title'],axis=1)
 #Add Price_m2 column
 df['Price_m2'] = df['Price']/df['Area']
 
+#Drop latitude and longitude columns
+df = df.drop(['Latitude','Longitude'],axis=1)
+
+df = df.dropna().reset_index(drop=True)
 
 #Save df to csv file for further analysis and preprocessing
 df.to_csv('mubawab_listings_clean.csv',index=False)
